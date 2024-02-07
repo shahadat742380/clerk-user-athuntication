@@ -1,6 +1,9 @@
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { WebhookEvent } from "@clerk/nextjs/server";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -48,11 +51,58 @@ export async function POST(req: Request) {
   }
 
   // Get the ID and type
-  const { id } = evt.data;
+  const { id, ...attributes } = evt.data;
   const eventType = evt.type;
- 
-  console.log(`Webhook with and ID of ${id} and type of ${eventType}`)
-//   console.log('Webhook body:', body)
- 
-  return new Response('', { status: 200 })
+
+  console.log(`Webhook with and ID of ${id} and type of ${eventType}`);
+  console.log({ attributes });
+
+  if (eventType === "user.created") {
+    // console.log("user created by clerk");
+    const alreadyExists = await db
+      .select()
+      .from(users)
+      .where(eq(users.external_id, id!)) // Add the non-null assertion operator (!) to ensure that id is not undefined
+      .get();
+
+    console.log(alreadyExists);
+
+    if (alreadyExists) return;
+
+    const newUser = await db
+      .insert(users)
+      .values({
+        external_id: id!,
+        first_name: evt.data.first_name,
+        last_name: evt.data.last_name,
+        email: evt.data.primary_email_address_id,
+        photo_url: evt.data.image_url,
+        attributes: attributes,
+      })
+      .returning()
+      .get();
+
+    console.log({ newUser });
+  }
+  else if (eventType === "user.updated") {
+    const undatedUser = await db
+      .update(users)
+      .set({
+        external_id: id,
+        first_name: evt.data.first_name,
+        last_name: evt.data.last_name,
+        email: evt.data.primary_email_address_id,
+        photo_url: evt.data.image_url,
+        attributes: attributes,
+      })
+      .where(eq(users.external_id, id!))
+      .returning()
+      .get();
+
+    console.log({ undatedUser });
+  }
+
+  // console.log("Webhook body:", body);
+
+  return new Response("", { status: 200 });
 }
