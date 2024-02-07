@@ -1,9 +1,15 @@
-import { withClerkMiddleware } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+// import { withClerkMiddleware } from "@clerk/nextjs/server";
+// import { NextResponse } from "next/server";
+// import type { NextRequest } from "next/server";
 
-export default withClerkMiddleware((req: NextRequest) => {
-  return NextResponse.next();
+import { authMiddleware } from "@clerk/nextjs";
+
+// export default withClerkMiddleware((req: NextRequest) => {
+//   return NextResponse.next();
+// });
+
+export default authMiddleware({
+  publicRoutes: ["/api/webhooks(.*)"],
 });
 
 // Stop Middleware running on static files and public folder
