@@ -57,6 +57,25 @@ export async function POST(req: Request) {
   console.log(`Webhook with and ID of ${id} and type of ${eventType}`);
   console.log({ attributes });
 
+
+  // if (eventType === "user.created") {
+
+  //   console.log("LOG✨✨✨✨", eventType)
+  //   console.log("LOG✨✨✨✨", payload.data.email_addresses)
+
+  //   const user = await db.insert(users)
+  //   .values({
+  //           external_id: id!,
+  //           first_name: evt.data.first_name,
+  //           last_name: evt.data.last_name,
+  //           email: evt.data.primary_email_address_id,
+  //           photo_url: evt.data.image_url,
+  //           attributes: attributes,
+  //         })
+            
+            
+  // }
+
   if (eventType === "user.created") {
     // console.log("user created by clerk");
     const alreadyExists = await db
